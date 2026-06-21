@@ -1,0 +1,104 @@
+---
+title: Workspace lifecycle
+description: Archive, restore, and permanently delete workspaces, plus quick switching with recently visited workspaces.
+---
+
+A workspace can be in one of two states: **active** or **archived**. Active workspaces appear everywhere—the switcher, the manage list, and your sidebar. Archiving a workspace removes it from those surfaces without destroying any data, so you can restore it later or delete it permanently in a separate step.
+
+Use this page when you need to wind down a workspace, recover one you archived earlier, free up resources, or understand why a workspace has disappeared from a teammate's switcher.
+
+## Who can perform each action
+
+| Action | Required role |
+|--------|---------------|
+| Archive a workspace | Workspace **Owner** |
+| Restore an archived workspace | Workspace **Owner** |
+| Permanently delete an archived workspace | Workspace **Owner** |
+| Leave a workspace | Any member who is not the Owner |
+
+Workspace Admins can manage members, billing, and settings, but archive, restore, and permanent delete are reserved for the Owner. See [roles and permissions](/platform/administration/roles-permissions) for the full role breakdown.
+
+## Archive a workspace
+
+Archiving flips the workspace's status from `active` to `archived`. The workspace, its projects, and its data are preserved, but every member loses access until you restore it.
+
+To archive a workspace:
+
+1. Go to **Workspaces** in your account menu.
+2. Find the workspace you own and open its row menu.
+3. Choose **Archive** and confirm.
+
+What members see immediately after you archive:
+
+- The workspace disappears from the workspace switcher.
+- The workspace is removed from the **Workspaces** manage list (active view).
+- Any sidebar that was scoped to the archived workspace clears, and authenticated requests against it are refused with a `No workspace membership` response.
+- The workspace's projects are hidden from the projects list, and project-scoped APIs (drawings, issues, meetings, BOQ, and so on) return `error.project_archived` until the workspace is restored.
+- The workspace ID is removed from the **Recent** section of the switcher for every user.
+
+Billing is not affected by archiving. The Stripe subscription, if any, continues to renew. Permanently delete the workspace if you want billing to stop.
+
+<Info>
+  Archiving does not require removing other members first. Members keep their roles and rejoin automatically once you restore the workspace.
+</Info>
+
+## Restore an archived workspace
+
+Only the Owner can see their archived workspaces, and only from the manage page.
+
+1. Go to **Workspaces**.
+2. Toggle **Show archived**. The list switches to archived workspaces you own.
+3. Click **Restore** on the workspace you want back.
+
+The workspace returns to `active` status. It reappears in the switcher, the manage list, and the sidebars of every member who still has a membership row. The restored workspace is also re-added to your own **Recent** list so it is one click away.
+
+## Permanently delete a workspace
+
+Permanent delete removes the workspace and all of its data from the database. Because this is destructive and irreversible, you must archive the workspace first—the server rejects a delete against an active workspace with `WORKSPACE_NOT_ARCHIVED`.
+
+To permanently delete:
+
+1. Archive the workspace (see [Archive a workspace](#archive-a-workspace)).
+2. On the **Workspaces** page, toggle **Show archived**.
+3. Open the row menu and choose **Delete**.
+4. Confirm **Delete forever** in the dialog.
+
+What happens server-side:
+
+- The workspace's Stripe subscription is canceled before the workspace row is removed. If the cancellation call fails, the error is logged and reported, but the delete still proceeds so the row does not leak.
+- The workspace and all related records are removed.
+- The workspace ID is evicted from your **Recent** list before the page reloads.
+- A `workspace.deleted` domain event is emitted so downstream consumers can react.
+
+<Warning>
+  Permanent delete cannot be undone. Export anything you need before deleting, and confirm that the Stripe subscription cancellation is the outcome you want.
+</Warning>
+
+## Leaving a workspace
+
+If you are a member (not the Owner) of a workspace and want to remove your own access, use **Leave workspace** from the row menu on the **Workspaces** page. Leaving:
+
+- Drops your membership row, so the workspace no longer resolves for your account.
+- Removes the workspace from your **Recent** list immediately, so it does not linger in the switcher.
+
+Owners cannot leave their own workspace—transfer ownership or archive the workspace instead.
+
+## Recently visited workspaces
+
+The workspace switcher shows up to three **Recent** workspaces above the full **All workspaces** list. The recents list is designed for quick switching between the workspaces you actually work in day-to-day.
+
+How the recents list behaves:
+
+- Stored locally in your browser under the `architonx-recent-workspaces` key. Up to six entries are kept; the switcher displays the top three.
+- A workspace is added to the top of the list whenever you select it from the switcher, create a new workspace, or restore one you previously archived.
+- The list is pruned automatically when the workspace is no longer reachable for you. This happens when:
+  - You archive a workspace you own.
+  - You permanently delete an archived workspace (from the manage page or from workspace settings).
+  - You leave a workspace.
+  - A workspace is renamed or removed and no longer appears in the loaded workspace list when the switcher opens—the safety-net prune drops orphaned IDs.
+
+Because the recents list lives in `localStorage`, it is per-browser and per-device. Clearing browser storage resets it, and signing in on a new device starts with an empty **Recent** section until you switch workspaces a few times.
+
+<Info>
+  The **Recent** section only appears when search is empty and you have at least one stored recent workspace. As soon as you type in the search box, the switcher collapses back to a single filtered list.
+</Info>
