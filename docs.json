@@ -53,7 +53,8 @@
               "platform/key-concepts",
               "platform/configuration/settings",
               "platform/configuration/user-management",
-              "platform/administration/roles-permissions"
+              "platform/administration/roles-permissions",
+              "platform/notifications-and-alerts"
             ]
           },
           {
@@ -112,7 +113,8 @@
               "ar/platform/key-concepts",
               "ar/platform/configuration/settings",
               "ar/platform/configuration/user-management",
-              "ar/platform/administration/roles-permissions"
+              "ar/platform/administration/roles-permissions",
+              "ar/platform/notifications-and-alerts"
             ]
           },
           {
