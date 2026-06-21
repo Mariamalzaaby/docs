@@ -8,7 +8,10 @@
     "light": "#26BD6C",
     "dark": "#166E3F"
   },
-  "favicon": "/favicon.ico",
+  "favicon": {
+    "light": "/images/architonx-logomark-in-primary.png",
+    "dark": "/images/architonx-logomark-in-primary.png"
+  },
   "icons": {
     "library": "lucide"
   },
@@ -143,8 +146,8 @@
     ]
   },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/images/architonx-logo-in-secondary-tertiary.png",
+    "dark": "/images/architonx-logo-in-primary-secondary.png"
   },
   "navbar": {
     "links": [],
