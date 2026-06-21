@@ -1,0 +1,219 @@
+---
+title: Approval routing and inbox
+description: Route variations, submittals, payment applications, and RFIs through multi-step approval chains, and act on them from a single inbox.
+---
+
+The Approvals system routes work items that need a sign-off — Variations, Submittals, Payment Applications, and RFIs — through configurable approval chains, surfaces them to the right people in an Approval Inbox, and tracks every decision for audit.
+
+Use it whenever a record should not advance until one or more people review it, especially when reviewers depend on the record's value, type, or project.
+
+## When approvals are triggered
+
+When a user submits one of the supported entities, the engine automatically:
+
+1. Loads every active approval rule in the workspace for that entity type.
+2. Evaluates each rule's conditions against the submitted record.
+3. Creates an approval request for every matching rule.
+4. Notifies the first step's approvers by email and in the Approval Inbox.
+
+The entities that auto-trigger approvals on submit are:
+
+| Entity | Trigger event |
+|--------|---------------|
+| **Variation** | Submitted (moved from `draft` or `rejected` to `submitted`). |
+| **Submittal** | Submitted for review. |
+| **Payment Application** | Submitted for review. |
+| **RFI** | Created. |
+
+If no rule matches, the entity follows its normal status flow with no approval request created. Duplicate requests are prevented — the same entity and rule pair will not be queued twice while a request is still open.
+
+## Authoring approval rules
+
+Go to **Settings → Approvals → Rules** to create and manage rules. You need the `approvals:manage` permission (Owner or Admin).
+
+Each rule has:
+
+- **Entity type** — the record this rule applies to (Variation, Submittal, Payment Application, RFI).
+- **Conditions** — optional filter on the entity, for example "amount greater than 50,000" or "category contains structural". Rules with conditions only fire when the record matches.
+- **Approver sequence** — one or more ordered steps. Each step contains one or more approvers and a quorum setting.
+
+### Steps, approvers, and quorum
+
+A step can list:
+
+- **Specific users** — chosen by name.
+- **Roles** — every workspace member holding that role at the time the request advances becomes an approver for the step.
+
+The **quorum** setting on each step controls how many approvers must act before the step closes:
+
+| Quorum | Behavior |
+|--------|----------|
+| **Any** | The first approver to approve advances the request. |
+| **All** | Every approver on the step must approve before the request advances. |
+
+Quorum applies to approvals only — a single reject closes the request regardless of quorum. Steps can be reordered and labeled (for example "Project Manager", "Finance", "Director") so approvers see meaningful progress in the inbox.
+
+### Conditional step branching
+
+Individual steps can carry their own conditions. When a request reaches a step, the engine evaluates the step's condition against the entity. If it does not match, the step is skipped and the request moves to the next eligible step.
+
+Supported operators: `eq`, `gt`, `gte`, `lt`, `lte`, `contains`.
+
+Use this to model rules like:
+
+- A "Director sign-off" step that only runs when `amount > 100000`.
+- A "Safety review" step that only runs when `category contains safety`.
+
+A built-in **dry-run preview** on the rule editor lets you supply a sample value and see which steps would execute or be skipped before saving.
+
+### Example rule
+
+```json
+{
+  "name": "Variation > 50k",
+  "entityType": "variation",
+  "active": true,
+  "conditions": [
+    { "field": "amount", "operator": "gt", "value": 50000 }
+  ],
+  "steps": [
+    {
+      "label": "Project Manager",
+      "approvers": [{ "type": "role", "role": "project_manager" }],
+      "quorum": "any"
+    },
+    {
+      "label": "Finance",
+      "approvers": [
+        { "type": "user", "userId": "usr_finance_1" },
+        { "type": "user", "userId": "usr_finance_2" }
+      ],
+      "quorum": "all"
+    },
+    {
+      "label": "Director",
+      "approvers": [{ "type": "role", "role": "director" }],
+      "quorum": "any",
+      "conditionField": "amount",
+      "conditionOperator": "gt",
+      "conditionValue": 100000
+    }
+  ]
+}
+```
+
+In this rule the Director step only runs for variations above 100,000; smaller variations close after Finance signs off.
+
+## The Approval Inbox
+
+The Approval Inbox at **Approvals → Inbox** is where approvers see everything waiting on them. Each row shows the entity, the rule that created the request, and a step-by-step progress bar with one pip per step (green = completed, lime = current, grey = upcoming). Items routed through the rules engine are tagged **Tracked**.
+
+Filters cover entity type, project, and SLA window. Each entity type has its own default SLA — overdue items are highlighted.
+
+### Actions
+
+From a row or the detail drawer, an approver can:
+
+- **Approve** — records the action, counts it toward the step's quorum, and either advances to the next step or closes the request.
+- **Reject** — closes the request immediately and (for Variations) marks the underlying record `rejected`. A single rejection ends the chain regardless of how many other approvers have acted.
+- **Request info** — pauses the request in `info_requested` status with a comment explaining what is missing. The submitter is notified to follow up.
+
+The detail drawer also shows the full approver chain, the rule name, and the complete action history with each decision, comment, and timestamp.
+
+<Info>
+  Approvers only see items where they are an authorised approver for the **current** step, either directly, through a role they hold, or through an active delegation.
+</Info>
+
+### Reopening info-requested items
+
+When more information arrives, the submitter (or any user with access to the record) can reopen the paused request from the inbox drawer. Reopening:
+
+- Posts an `approval_action` of type `reopened` on the request, including an optional **reply comment** explaining what changed.
+- Returns the request to `pending` on its current step.
+- Emails every approver on the current step so they know it is ready for another look.
+
+### Rejected variations
+
+A rejected variation cannot be approved again directly. The variation detail page shows an inline banner explaining that the record must move back to **Draft** or **Under Review** before a new approval cycle can start, with quick-action buttons for both transitions. The Approve option is hidden on the approval dialog until the variation is back under review.
+
+This guard exists to ensure a fresh review cycle — and the right approval rule evaluation — runs on a rejected record before it can be approved.
+
+### Why a step was skipped
+
+Skipped steps are stored on the request so admins can see why a step did not run. In the inbox, an item linked to a tracked request shows a branch icon — opening it lists every skipped step with the condition (field, operator, configured value), the actual value from the record at the time, and the timestamp.
+
+Use this view when a stakeholder asks "why didn't this go to Finance?" — the answer is always one click away.
+
+## Delegations
+
+Delegations let an approver hand their approval authority to another user for a set period — for example while they are on leave. The delegate can approve any item the delegator would have been routed.
+
+Create a delegation from **Approvals → Delegations**:
+
+1. Pick the delegate.
+2. Pick an expiry date and time.
+3. Save.
+
+The delegate is added to the approver list whenever the delegator would have been resolved, and every approval the delegate records is attributed to them with a clear "delegated from" marker on the action history.
+
+### Lifecycle and prune job
+
+Delegations have a fixed expiry. An hourly background job deletes any delegation whose `expiresAt` is in the past, so the delegation list stays clean and stale delegations cannot be used.
+
+### Expiry warning emails
+
+Roughly 24 hours before a delegation expires the system sends:
+
+- A warning email to the **delegate** confirming when their authority ends.
+- A warning email to the **delegator** with one-click action links.
+
+The delegator's email includes:
+
+- **Extend** — opens a confirmation page where the delegator picks how many days to add: **7, 14, 30, or 60**. The default is 30. Out-of-range values fall back to 30.
+- **Cancel delegation** — revokes the delegation immediately.
+
+Both links are signed and time-limited (48-hour token TTL), and both actions are idempotent — extending an already-cancelled delegation or cancelling an already-cancelled one returns a friendly confirmation rather than an error.
+
+### Bulk delegation management
+
+Workspace Owners and Admins (anyone with `approvals:manage`) get an **Admin delegations** tab that lists every delegation in the workspace, regardless of delegator. From this view an admin can:
+
+- Create a delegation on behalf of any user.
+- Revoke any delegation, even one they did not create.
+
+Use this when a user leaves the company or forgets to set up cover before going on leave.
+
+## Email notifications
+
+The Approvals system sends transactional emails at each key moment in the lifecycle:
+
+| Template | Sent to | When |
+|----------|---------|------|
+| `approval-assigned` | Approvers on the current step | A new approval request is created or advances to the next step. |
+| `approval-actioned` | The request creator | An approver approves, rejects, or requests info. Self-actions are skipped. |
+| `approval-reopened` | Approvers on the current step | A submitter reopens an info-requested item. |
+| `approval-delegation-created` | The delegate | A delegation is granted to them. |
+| `approval-delegation-expiry-warning` | The delegate | ~24 hours before the delegation expires. |
+| `approval-delegation-expiry-warning-delegator` | The delegator | ~24 hours before expiry, with one-click extend and cancel links. |
+
+All emails are bilingual (English and Arabic) and link back to the relevant inbox or approval item.
+
+### Notification preferences
+
+Each user can opt out of approval emails independently from other channels under **Settings → Notifications**. Two dedicated preference keys cover the approvals flow:
+
+| Preference key | Controls |
+|----------------|----------|
+| `approval-assigned` | Emails sent when you are assigned an approval, the request advances to a step you are on, or an info-requested item you approve is reopened. |
+| `approval-actioned` | Emails sent to you (as the request creator) when an approver acts on your request. |
+
+Both default to **on** because approval emails are high-signal and actionable. Opting out only affects emails — the items still appear in the Approval Inbox.
+
+## Permissions
+
+| Permission | Allows |
+|------------|--------|
+| `approvals:manage` | Author rules, manage any delegation in the workspace, view skipped-step details. Held by Owner and Admin. |
+| `approvals:act` | See assigned items in the Approval Inbox and approve, reject, request info, or reopen them. |
+
+Submitters do not need any approvals permission — submitting a supported entity is what creates the request.
