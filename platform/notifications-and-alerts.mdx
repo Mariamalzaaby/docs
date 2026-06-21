@@ -1,0 +1,137 @@
+---
+title: Notifications and alerts
+description: Web push notifications, live sidebar badges, deep-link Quick Actions, and notification highlighting across the platform.
+---
+
+The platform keeps you informed of new activity through three connected surfaces: the **notifications bell** in the sidebar, **live sidebar badges** on each section, and optional **browser push notifications** that arrive even when the tab is closed. Clicking a notification deep-links you straight to the affected record and highlights it, and the **Quick Actions** panel lets you skip a step when you want to create a record from a link.
+
+This page explains how each surface works, when to use it, and how to configure it.
+
+## Notification bell and unread count
+
+The bell icon in the sidebar shows an unread count badge that reflects the server-authoritative total for your account—not just the notifications visible in the open panel.
+
+- The badge updates **without opening the notifications panel first**. The sidebar polls every 30 seconds and refetches when you focus the browser tab, so the count stays close to live without any action from you.
+- Marking a notification as read—or using **Mark all as read**—clears the badge immediately rather than waiting for the next poll.
+- The count is accurate even when you have more unread items than fit on the first page of the notifications panel.
+
+<Info>
+  The bell badge derives its count from the same `sidebar-summary` data that powers the live section badges below, so the numbers stay consistent across the sidebar.
+</Info>
+
+## Live sidebar badges
+
+Each section in the sidebar can display a live badge with the number of items that need your attention. Badges refresh every 30 seconds and after any related action you take (creating, updating, acknowledging, or marking read), so you do not have to navigate into a section just to know whether something changed.
+
+| Sidebar item | What the badge counts |
+|--------------|-----------------------|
+| **Action Items** | Overdue action items in your workspace. |
+| **Approval Routing** | Variations that are pending, submitted, or under review. |
+| **QA Inspections** | Inspections whose workflow status is rejected. |
+| **NCR / Defects** | Open, non-draft NCRs in your workspace. |
+| **Transmittals** | Transmittals where you are listed as an unacknowledged recipient. |
+| **Notifications (bell)** | Your unread notifications. |
+
+Badges respect role-based permissions: if you do not have access to a section, no badge is shown for it.
+
+## Browser push notifications
+
+Push notifications deliver alerts to your operating system even when the app tab is closed or in the background. Use them when you need to be reached for high-priority events (a new RFI, an action item update, a meeting invite) without keeping the tab focused.
+
+### Enable push notifications
+
+1. Open **Settings → Notifications** in the platform.
+2. In the **Browser notifications** section, grant browser permission when prompted.
+3. Turn on **Background push notifications** using the persistent toggle.
+
+The toggle state is remembered across reloads. If you turn push off, the app will not silently re-subscribe you the next time you sign in—you must turn the toggle back on explicitly.
+
+The **Browser notifications** section also shows your current subscription status so you can confirm at a glance whether this device is registered to receive push.
+
+### What you see when the tab is closed
+
+When the tab is closed or backgrounded, qualifying events trigger a **visible push pop-up** from the browser (title, body, and the app icon). Clicking the pop-up opens the relevant record directly—see [Deep-link record highlighting](#deep-link-record-highlighting) below.
+
+Repeated pushes for the same stream replace the previous pop-up rather than stacking, so you do not get a tower of notifications during a busy hour.
+
+<Note>
+  Push notifications are per-device. Enabling the toggle on your laptop does not subscribe your phone, and turning it off on one device does not affect the others.
+</Note>
+
+### Multi-device behaviour
+
+When you read a notification on one device, the unread badge on every other device you are signed in on updates automatically. There is no need to refresh the app or reopen the tab—the badge syncs silently in the background without showing an additional pop-up on the other devices.
+
+## Deep-link Quick Actions
+
+The **Quick Actions** panel on the project dashboard contains a row of dashed-border buttons that open the create form for common records in a single click.
+
+### When the panel appears
+
+- An active project must be selected. The panel is hidden on the empty dashboard.
+- Each button is gated by your **create permission** for that record type. If you do not have permission to create RFIs, the New RFI button is hidden; if you have no create permissions at all, the panel itself does not render.
+
+### Available actions
+
+| Button | Opens |
+|--------|-------|
+| **New RFI** | The RFI tab of the project's Documents page with the create dialog open. |
+| **New Action Item** | The workspace Action Items page with the create dialog open. |
+| **New Issue** | The project Issues page with the create dialog open. |
+| **New NCR** | The NCR / Defects page with the create dialog open. |
+| **New Submittal** | The Submittals page with the create dialog open. |
+| **New Variation** | The Approval Routing / Variations page with the create dialog open. |
+| **New Meeting** | The project Meetings page with the create dialog open. |
+| **Log Site Entry** | The project Site Diary page with the new entry form open. |
+| **New Material** | The workspace Materials page with the add dialog open. |
+| **New Punch Item** | The project Punch List page with the create dialog open. |
+
+### Using the `?create=1` deep link directly
+
+Each button is backed by a URL query parameter that you can use in bookmarks, email templates, or external integrations. Appending `?create=1` to any supported list page opens its create dialog as soon as the page loads.
+
+```text Examples
+/projects/PROJECT_ID/documents?create=1   # RFI create dialog
+/projects/PROJECT_ID/issues?create=1      # Issue create dialog
+/projects/PROJECT_ID/meetings?create=1    # Meeting create dialog
+/projects/PROJECT_ID/site-diary?create=1  # Site diary entry form
+/projects/PROJECT_ID/punch-list?create=1  # Punch list item dialog
+/action-items?create=1                    # Action item create dialog
+/materials?create=1                       # Material add dialog
+```
+
+The parameter is removed from the URL after the dialog opens, so refreshing the page does not re-open the dialog. The **+ New** quick-create menu in the sidebar uses the same parameter when an active project is in scope.
+
+<Tip>
+  Combine `?create=1` links with team templates or chat shortcuts so colleagues land directly on the right form without manual navigation.
+</Tip>
+
+## Deep-link record highlighting
+
+When you click a notification—whether in the notifications panel or from a push pop-up—the platform navigates you to the record and highlights it so you can spot it instantly.
+
+### Where highlighting works
+
+The scroll-into-view and highlight ring are applied on these list pages:
+
+- RFIs
+- Action Items
+- NCRs / Defects
+- Submittals
+- Meetings
+- Site Diary
+- Punch List
+
+### How it behaves
+
+- The target row is scrolled into view with smooth scrolling and shown with a coloured ring for about three seconds.
+- The `?highlight=<id>` parameter is removed from the URL immediately, so a page refresh does not re-highlight the row.
+- If the target record is hidden by **active filters**, the page clears those filters automatically so the row becomes visible.
+- If the target record is on a **different server page**, the page navigates to the first page and clears filters so the row can be found.
+- On calendar-driven pages like Site Diary, the calendar jumps to the date of the target entry so it appears in the list.
+
+This means a deep link is always reachable, even if your current filter, sort, or page would otherwise hide the record.
+
+## Configure defaults
+
+Workspace-level defaults for new members are configured in [General settings → Notification defaults](/platform/configuration/settings#notification-defaults). Individual members can still override these from **Settings → Notifications** at any time, including the persistent **Background push notifications** toggle described above.
