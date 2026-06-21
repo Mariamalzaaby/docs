@@ -9,6 +9,8 @@ Understanding the core model makes every other guide easier to follow. This page
 
 A workspace is the top-level container for your organization. It holds all projects, members, settings, and billing information. Every user belongs to at least one workspace, and each workspace operates independently with its own configuration and data.
 
+Each workspace has exactly one **Owner** who can transfer ownership or permanently delete the workspace from **Workspace Settings → Danger Zone**.
+
 Workspaces are identified by a unique slug used in URLs and API calls.
 
 ## Projects
@@ -16,20 +18,25 @@ Workspaces are identified by a unique slug used in URLs and API calls.
 Projects are the primary unit of work within a workspace. Each project has its own members, settings, and data. You can create as many projects as you need, and the same user can belong to multiple projects with different roles in each.
 
 <Info>
-  Project-level role overrides take precedence over workspace-level roles. A user who is a Viewer at the workspace level can be granted Admin access on a specific project.
+  Project-level role overrides take precedence over workspace-level roles. A user who is a Viewer at the workspace level can be granted Admin access on a specific project, and an external Contractor can be promoted to Consultant on a single job.
 </Info>
 
 ## Members and roles
 
-Every workspace member is assigned a role that controls what they can see and do:
+Every workspace member is assigned a role that controls what they can see and do. Roles fall into two groups:
+
+**Workspace roles** — for your internal team:
 
 | Role | Description |
 |------|-------------|
-| **Admin** | Full access to workspace settings, billing, and all projects. Can invite and remove members. |
+| **Owner** | Everything an Admin can do, plus transfer ownership, delete the workspace, and export workspace data. One per workspace. |
+| **Admin** | Full access to settings, billing, and all projects. Can invite and remove members. |
 | **Member** | Can create and manage projects they belong to. Cannot access billing or workspace-level settings. |
-| **Viewer** | Read-only access to projects they are added to. Cannot create or modify content. |
+| **Viewer** | Read-only access to projects they are added to. |
 
-Custom roles with granular permissions are available on higher-tier plans. See [roles and permissions](/platform/administration/roles-permissions) for details.
+**External roles** — for field collaborators (Consultant, Contractor, Subcontractor, Supplier). External roles only see the projects they are explicitly assigned to, and each has a tightly scoped permission set. Subcontractors can only edit Issues, Site Diary, and Punch List items they themselves created.
+
+See [roles and permissions](/platform/administration/roles-permissions) for the full matrix, per-project overrides, role history, and the ownership transfer flow.
 
 ## API credentials
 

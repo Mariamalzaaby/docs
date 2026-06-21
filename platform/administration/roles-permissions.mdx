@@ -3,15 +3,20 @@ title: Roles and permissions
 description: Assign and customize access control across your workspace and projects.
 ---
 
-The platform uses a role-based access control (RBAC) model. Roles are assigned at the workspace level and can be overridden at the project level for granular control.
+The platform uses a role-based access control (RBAC) model. Every member has a workspace-level role, and external (field-team) roles can be further scoped to specific projects with per-project overrides.
 
 ## Built-in roles
 
-Three built-in roles cover most team structures:
+Roles fall into two groups: **workspace roles** for your internal team, and **external roles** for field collaborators who should only see the projects they are working on.
 
-<CardGroup cols={3}>
+### Workspace roles
+
+<CardGroup cols={2}>
+  <Card title="Owner" icon="crown">
+    Exclusive control over the workspace itself. Owners can do everything an Admin can do, plus transfer workspace ownership, permanently delete the workspace, and export workspace data. There is exactly one Owner per workspace.
+  </Card>
   <Card title="Admin" icon="shield">
-    Full access to workspace settings, billing, all projects, and member management. Assign sparingly.
+    Full access to settings, billing, all projects, and member management. Admins cannot transfer ownership, delete the workspace, or export workspace data.
   </Card>
   <Card title="Member" icon="user">
     Can create projects, manage content, and invite collaborators within their projects. Cannot access billing or workspace settings.
@@ -21,9 +26,107 @@ Three built-in roles cover most team structures:
   </Card>
 </CardGroup>
 
+### External roles
+
+External roles are designed for contractors and other field collaborators. They never see the full workspace — they only see the projects they are explicitly assigned to.
+
+<CardGroup cols={2}>
+  <Card title="Consultant" icon="briefcase">
+    Read and write access to requirements, sustainability, and the project directory. Can act on approval steps assigned to them. Cannot see Approval Routing configuration.
+  </Card>
+  <Card title="Contractor" icon="hard-hat">
+    Read access to requirements, sustainability, and directory. Can act on approval steps. No access to Contractor Performance or Progress Report analytics.
+  </Card>
+  <Card title="Subcontractor" icon="wrench">
+    Limited field access. On Issues, Site Diary, and Punch List, Subcontractors can only edit or delete items they themselves created (own-item scope). Cannot trigger QA actions, early-warning flag actions, or warning-threshold changes.
+  </Card>
+  <Card title="Supplier" icon="truck">
+    Directory read access only. Designed for material suppliers who need to look up contacts but should not see project data.
+  </Card>
+</CardGroup>
+
+<Info>
+  Subcontractor own-item access also applies to bulk-update and status-transition endpoints. A Subcontractor cannot, for example, bulk-close a list of issues that contains issues authored by another user — the entire batch is rejected.
+</Info>
+
+## Permission strings
+
+Each role is defined by a set of granular permission strings. Workspace settings used to share two generic strings (`settings:read` and `settings:write`); those have been replaced with dedicated strings so roles can be scoped precisely:
+
+| Area | Permission strings |
+|------|-------------------|
+| Project templates | `project-templates:read`, `project-templates:write` |
+| Custom fields | `custom-fields:read`, `custom-fields:write` |
+| Workflow rules | `workflow-rules:read`, `workflow-rules:write` |
+| Approvals | `approvals:manage` (configure routing), `approvals:act` (approve/reject) |
+| Audit log | `audit:read` |
+| Integrations & webhooks | `integrations:manage` |
+| Email templates | `email-templates:read`, `email-templates:write` |
+| Data export | `data:export` (Owner only) |
+
+Custom roles can be built from any combination of these strings.
+
+## Per-project role overrides
+
+A member's workspace role can be overridden for an individual project. This is most commonly used to give an external role a different scope on a specific project — for example, making a Contractor act as a Consultant on one job.
+
+External roles **must** have at least one project assignment to see any project data. Members without an override fall back to their workspace role.
+
+To assign or clear an override:
+
+1. Open the project and go to the **Members** tab.
+2. Find the member. The badge shows their effective role; an asterisk (`*`) indicates an override is in place.
+3. Open the role dropdown and pick a new role, or pick **Workspace default** to clear the override.
+
+```http
+PATCH /api/v1/projects/{projectId}/members/{userId}/role
+Content-Type: application/json
+
+{ "role": "consultant" }
+```
+
+Passing `"role": null` removes the override and returns the member to their workspace role for that project.
+
+<Info>
+  Only Owners and Admins can manage project-scoped access and role overrides.
+</Info>
+
+## Role history
+
+Every role-override change is recorded in an audit trail. Admins can review the full chronological history of who changed which role, when, and from what to what.
+
+- **Per-project history** — On the project **Members** tab, open a member's row to see role-override changes scoped to that project.
+- **Cross-project history** — On the workspace **Team** page, open a member to see every role-override change for that member across every project, from one place.
+
+Each entry shows the timestamp, the actor (the admin who made the change), the project, and the old → new role.
+
+## Transfer workspace ownership
+
+Only the Owner can transfer ownership. The transfer is immediate: the new Owner gains all Owner-only capabilities, and the previous Owner is downgraded to Admin.
+
+1. Go to **Workspace Settings → General → Danger Zone**.
+2. Click **Transfer ownership**.
+3. Use the searchable picker to choose the new Owner. Only existing workspace members are eligible.
+4. Type the workspace name to confirm, then submit.
+
+Both parties receive an email notification once the transfer completes.
+
+<Warning>
+  Transfer ownership and **Delete workspace** (also in Danger Zone) are permanent and cannot be undone from the UI.
+</Warning>
+
+## What members see when access is denied
+
+When a member opens a page they don't have permission for, the platform shows them why instead of redirecting silently:
+
+- **Permission-gated routes** — A destructive toast appears with the message _"Access denied — You don't have permission to view {feature}"_, and the user is redirected to the URL configured by `redirectTo` (usually the workspace home).
+- **Portfolio Schedule** — External members with project-scoped access see a blocked-state error directing them to use the per-project Schedule view. The page does not retry the request.
+- **Approval Routing** — Hidden from Consultants and other roles without `approvals:manage`. Direct navigation triggers the denied-access toast.
+- **Upgrade-gated routes** — If the feature requires a higher subscription tier, a toast names the feature and the required plan before redirecting.
+
 ## Custom roles
 
-Custom roles let you define precise permission sets for teams with non-standard access needs. Each custom role is built by selecting from a list of granular permissions.
+Custom roles let you define precise permission sets for teams with non-standard access needs. Each custom role is built by selecting from the permission strings listed above.
 
 To create a custom role:
 
@@ -35,21 +138,3 @@ To create a custom role:
 <Info>
   Custom roles are available on Business and Enterprise plans. Workspace Admins can create and manage up to 20 custom roles.
 </Info>
-
-Common custom role patterns:
-
-- **Data analyst** — Read access to analytics dashboards and reports, no access to settings or user management.
-- **Integration manager** — Full access to integrations and connectors, read-only access to projects.
-- **Billing contact** — Access to billing settings only, no access to workspace data.
-
-## Per-project overrides
-
-A member's workspace-level role can be overridden for specific projects. Project-level roles take full precedence within that project.
-
-To assign a per-project role:
-
-1. Open the project and go to **Settings → Members**.
-2. Find the member and select a role from the dropdown.
-3. Save changes.
-
-Removing a per-project override reverts the member to their workspace-level role for that project.
