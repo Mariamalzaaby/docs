@@ -19,59 +19,124 @@
     "options": ["copy", "view", "assistant", "mcp", "add-mcp"]
   },
   "navigation": {
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Home",
-          "icon": "house",
-          "href": "/"
-        },
-        {
-          "anchor": "Changelog",
-          "icon": "scroll-text",
-          "href": "https://www.mintlify.com/docs/changelog"
-        },
-        {
-          "anchor": "Help",
-          "icon": "life-buoy",
-          "href": "https://www.mintlify.com/docs/contact-support"
-        }
-      ]
-    },
-    "directory": "card",
-    "groups": [
+    "languages": [
       {
-        "group": "Platform",
-        "icon": "layers",
-        "expanded": true,
-        "pages": [
-          "platform/quickstart",
-          "platform/key-concepts",
-          "platform/configuration/settings",
-          "platform/configuration/user-management",
-          "platform/administration/roles-permissions"
+        "language": "en",
+        "default": true,
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Home",
+              "icon": "house",
+              "href": "/"
+            },
+            {
+              "anchor": "Changelog",
+              "icon": "scroll-text",
+              "href": "https://www.mintlify.com/docs/changelog"
+            },
+            {
+              "anchor": "Help",
+              "icon": "life-buoy",
+              "href": "https://www.mintlify.com/docs/contact-support"
+            }
+          ]
+        },
+        "directory": "card",
+        "groups": [
+          {
+            "group": "Platform",
+            "icon": "layers",
+            "expanded": true,
+            "pages": [
+              "platform/quickstart",
+              "platform/key-concepts",
+              "platform/configuration/settings",
+              "platform/configuration/user-management",
+              "platform/administration/roles-permissions"
+            ]
+          },
+          {
+            "group": "Analytics",
+            "icon": "chart-bar",
+            "expanded": true,
+            "pages": [
+              "analytics/quickstart",
+              "analytics/connect-data",
+              "analytics/dashboards/create-dashboard",
+              "analytics/reports/scheduled-reports"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "icon": "plug",
+            "expanded": true,
+            "pages": [
+              "integrations/quickstart",
+              "integrations/authentication",
+              "integrations/connectors/crm",
+              "integrations/webhooks/configure"
+            ]
+          }
         ]
       },
       {
-        "group": "Analytics",
-        "icon": "chart-bar",
-        "expanded": true,
-        "pages": [
-          "analytics/quickstart",
-          "analytics/connect-data",
-          "analytics/dashboards/create-dashboard",
-          "analytics/reports/scheduled-reports"
-        ]
-      },
-      {
-        "group": "Integrations",
-        "icon": "plug",
-        "expanded": true,
-        "pages": [
-          "integrations/quickstart",
-          "integrations/authentication",
-          "integrations/connectors/crm",
-          "integrations/webhooks/configure"
+        "language": "ar",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "الرئيسية",
+              "icon": "house",
+              "href": "/ar"
+            },
+            {
+              "anchor": "سجل التغييرات",
+              "icon": "scroll-text",
+              "href": "https://www.mintlify.com/docs/changelog"
+            },
+            {
+              "anchor": "المساعدة",
+              "icon": "life-buoy",
+              "href": "https://www.mintlify.com/docs/contact-support"
+            }
+          ]
+        },
+        "directory": "card",
+        "groups": [
+          {
+            "group": "المنصة",
+            "icon": "layers",
+            "expanded": true,
+            "pages": [
+              "ar/platform/quickstart",
+              "ar/platform/key-concepts",
+              "ar/platform/configuration/settings",
+              "ar/platform/configuration/user-management",
+              "ar/platform/administration/roles-permissions"
+            ]
+          },
+          {
+            "group": "التحليلات",
+            "icon": "chart-bar",
+            "expanded": true,
+            "pages": [
+              "ar/analytics/quickstart",
+              "ar/analytics/connect-data",
+              "ar/analytics/dashboards/create-dashboard",
+              "ar/analytics/reports/scheduled-reports"
+            ]
+          },
+          {
+            "group": "التكاملات",
+            "icon": "plug",
+            "expanded": true,
+            "pages": [
+              "ar/integrations/quickstart",
+              "ar/integrations/authentication",
+              "ar/integrations/connectors/crm",
+              "ar/integrations/webhooks/configure"
+            ]
+          }
         ]
       }
     ]
