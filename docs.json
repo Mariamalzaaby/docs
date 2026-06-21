@@ -53,7 +53,8 @@
               "platform/key-concepts",
               "platform/configuration/settings",
               "platform/configuration/user-management",
-              "platform/administration/roles-permissions"
+              "platform/administration/roles-permissions",
+              "platform/administration/workspaces"
             ]
           },
           {
